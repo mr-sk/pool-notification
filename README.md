@@ -5,9 +5,10 @@ SMS Pool notification for Crytographic Currency Mining.
 Currently only supprts give-me-ltc.com - in addition, requires
 amazon SNS service with a topic and subscription already created.
 
-Will send an SMS to your phone when a worker gets below a hashing threshold. 
+<b>Will send an SMS to your phone when a worker gets below a hashing threshold. </b>
 
 Setup
+
 1) Install submodules
 git submodule update --init --recursive
 
