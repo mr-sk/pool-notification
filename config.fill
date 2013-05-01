@@ -1,0 +1,3 @@
+snsTopic = 'arn:aws..' # AWS topic (create from portal)
+poolKey  = 'xxxxx'     # pool key (give-me-ltc support only)
+hashMin  = '2000'      # min hash value
