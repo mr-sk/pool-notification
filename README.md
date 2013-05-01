@@ -19,4 +19,6 @@ python setup.py install
 3) Move config.fill to config.py and fill out values.
 
 4) Setup cron to execute every 10 minutes
+<code>
 */10 * * * * python /.../pool-notification/monitor.py
+</code>
