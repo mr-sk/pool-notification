@@ -1,3 +1,8 @@
 snsTopic = 'arn:aws..' # AWS topic (create from portal)
 poolKey  = 'xxxxx'     # pool key (give-me-ltc support only)
-hashMin  = '2000'      # min hash value
+# Config your workers here
+workerDict = {
+    'worker.1': 1000,
+    'worker.2': 2000,
+    'worker.3': 3000
+}
