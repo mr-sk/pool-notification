@@ -18,39 +18,53 @@ import sys
 import pickle
 import os
 
-inmemoryDict = {}
-loadedDict   = {}
-if os.path.exists("workers.p"):
-    loadedDict = pickle.load(open("workers.p", "rb"))
-    print "[x] Loaded dictionary" 
+class Monitor:
+    
+    def __init__(self):
+        self.inmemoryDict = {}
+        self.loadedDict   = {}
+        self.giveMeLTCAPI = 'https://give-me-ltc.com/api?api_key='
+        if os.path.exists("workers.p"):
+            self.loadedDict = pickle.load(open("workers.p", "rb"))
+            print "[x] Loaded dictionary" 
 
-giveMeLTCAPI = 'https://give-me-ltc.com/api?api_key='
-req    = urllib2.Request(giveMeLTCAPI + config.poolKey)
-opener = urllib2.build_opener()
+    def sendAlert(self, msg):
+        sns = boto.connect_sns()
+        mytopic_arn = config.snsTopic
+        res = sns.publish(mytopic_arn, msg, '')
 
-for parentKey, subDict in json.loads(opener.open(req).read())['workers'].iteritems():
-   if 'last_share_timestamp' in subDict:
-       inmemoryDict[parentKey] = subDict['hashrate']
+    def heartbeat(self):
+        req    = urllib2.Request(self.giveMeLTCAPI + config.poolKey)
+        opener = urllib2.build_opener()
 
-if len(loadedDict.keys())< 1:
-    print "[!] Loaded dictionary is empty, assign (Probably first time running)"
-    pickle.dump(inmemoryDict, open("workers.p", "wb"))
-    sys.exit()
+        for parentKey, subDict in json.loads(opener.open(req).read())['workers'].iteritems():
+            if 'last_share_timestamp' in subDict:
+                self.inmemoryDict[parentKey] = subDict['hashrate']
 
-# Two dictionaries with values, compare the hash values in each
-# and make sure they don't both fall below the threshold. 
-dictIter = loadedDict.iteritems()
-for wName, wHash in config.workerDict.iteritems():
-    for lKey, lHash in dictIter:
-        if lKey in inmemoryDict:
-            print "[x] Worker %s current hash %s, threshold %s" % (lKey, lHash, wHash)
-            if int(lHash) < wHash:     
-                print "[!] Issue found with worker %s, sending alert" % lKey
-                sns = boto.connect_sns()
-                msg         = "Worker %s is below %s" % (lKey, wHash)
-                mytopic_arn = config.snsTopic
-                res = sns.publish(mytopic_arn, msg, '')
-        break
+        if len(self.loadedDict.keys())< 1:
+            print "[!] Loaded dictionary is empty, assign (Probably first time running)"
+            pickle.dump(self.inmemoryDict, open("workers.p", "wb"))
+            sys.exit()
 
-pickle.dump(inmemoryDict, open("workers.p", "wb"))    
-print "[x] Complete\n"
+        dictIter = self.loadedDict.iteritems()
+        for wName, wHash in config.workerDict.iteritems():
+            for lKey, lHash in dictIter:
+                if wName not in self.inmemoryDict:
+                    print "[!] Missing worker %s, sending alert" % wName
+                    self.sendAlert("Worker %s has dropped off" % wName)
+                if lKey in self.inmemoryDict:
+                    print "[x] Worker %s current hash %s, threshold %s" % (lKey, lHash, wHash)
+                    if int(lHash) < wHash:     
+                        print "[!] Issue found with worker %s, sending alert" % lKey
+                        self.sendAlert("Worker %s is below %s" % (lKey, wHash))
+                    break
+
+        pickle.dump(self.inmemoryDict, open("workers.p", "wb"))    
+        print "[x] Complete\n"
+
+#
+# Main
+#
+
+monitor = Monitor()
+monitor.heartbeat();
