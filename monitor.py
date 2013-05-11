@@ -42,7 +42,7 @@ if len(loadedDict.keys())< 1:
 dictIter = loadedDict.iteritems()
 for wName, wHash in config.workerDict.iteritems():
     for lKey, lHash in dictIter:
-        if inmemoryDict[lKey]:
+        if lKey in inmemoryDict:
             print "[x] Worker %s current hash %s, threshold %s" % (lKey, lHash, wHash)
             if int(lHash) < wHash:     
                 print "[!] Issue found with worker %s, sending alert" % lKey
